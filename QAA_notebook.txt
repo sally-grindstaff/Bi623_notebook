@@ -1,0 +1,268 @@
+FASTQ quality analysis assessment notebook - Sally Grindstaff, Bi623
+
+-----------------
+01 September 2021
+-----------------
+
+My assignments:
+Sally   27_4C_mbnl_S19_L008     28_4D_mbnl_S20_L008
+
+Input data lives here:
+/projects/bgmp/shared/2017_sequencing/demultiplexed/
+
+More specifically, I'll work with these files:
+/projects/bgmp/shared/2017_sequencing/demultiplexed/27_4C_mbnl_S19_L008_R1_001.fastq.gz
+/projects/bgmp/shared/2017_sequencing/demultiplexed/27_4C_mbnl_S19_L008_R2_001.fastq.gz
+/projects/bgmp/shared/2017_sequencing/demultiplexed/28_4D_mbnl_S20_L008_R1_001.fastq.gz
+/projects/bgmp/shared/2017_sequencing/demultiplexed/28_4D_mbnl_S20_L008_R2_001.fastq.gz
+
+DO NOT move, copy, or unzip the data files!!
+
+#figure out how to load fastqc on Talapas
+module spider fastqc/0.11.5
+ This module can be loaded directly: module load fastqc/0.11.5
+
+notes from fastqc --help:
+-o specifies output directory (must already exist), if not specified then output files will go to directory
+that the program was run from
+--extract is necessary if fastq's are zipped, but this is already set by default for command line fastqc
+--threads lets you specify number of threads to run on
+overall, it looks like I don't need to specify anything except maybe output (and obviously input, looks like
+I just put that directly after fastqc)
+
+pwd
+ /projects/bgmp/sgrindst/bioinformatics/Bi623/QAA
+mkdir fastqc_output
+
+sbatch fastqc_run.sh 
+Submitted batch job 16172928
+
+fastqc_run.sh finished with exit status 0 and took 4:14.06 (m:ss) to run. Output is in 
+/projects/bgmp/sgrindst/bioinformatics/Bi623/QAA/fastqc_output
+
+I will need to edit my per-base quality score distribution python script, because I hardcoded the values. I plan
+to copy it here and change the argparse just in this folder's version, so that I can still keep track of what I
+actually did in the Demultiplex assignment.
+
+#copy per-base quality score distribution python script (from Demux assignment the first) to working directory
+cd /projects/bgmp/sgrindst/bioinformatics/Bi623/QAA
+cp /projects/bgmp/sgrindst/bioinformatics/Bi622/Demultiplex/Assignment-the-first/qual_scores.py .
+
+I changed the script so that it only takes in one file at a time and uses argparse instead of hardcoding file names. 
+
+#Need to have Bioinfo module (Bioinfo.py) in working directory for python script to work.
+cp /projects/bgmp/sgrindst/bioinformatics/Bi622/Demultiplex/Assignment-the-first/Bioinfo.py .
+
+Will need to use bgmp_py39 conda environment to run this script because I need matplotlib which is not in my
+base conda environment.
+
+#test to make sure plot gets made correctly for one file before running the rest
+sbatch 27_4C_R1_qscore_dist_run.sh 
+Submitted batch job 16173362
+
+Exit status 0 and the plot looks good to me! Run the others:
+sbatch 27_4C_R2_qscore_dist_run.sh 
+Submitted batch job 16173421
+sbatch 28_4D_R1_qscore_dist_run.sh 
+Submitted batch job 16173422
+sbatch 28_4D_R2_qscore_dist_run.sh 
+Submitted batch job 16173424
+
+All finished with exit status 0.
+Times:
+Command being timed: "./qual_scores.py -i /projects/bgmp/shared/2017_sequencing/demultiplexed/27_4C_mbnl_S19_L008_R1_001.fastq.gz -o 27_4C_mbnl_S19_L008_R1_001 -l 101"
+Elapsed (wall clock) time (h:mm:ss or m:ss): 2:30.33
+Command being timed: "./qual_scores.py -i /projects/bgmp/shared/2017_sequencing/demultiplexed/27_4C_mbnl_S19_L008_R2_001.fastq.gz -o 27_4C_mbnl_S19_L008_R2_001 -l 101"
+Elapsed (wall clock) time (h:mm:ss or m:ss): 2:42.06
+Command being timed: "./qual_scores.py -i /projects/bgmp/shared/2017_sequencing/demultiplexed/28_4D_mbnl_S20_L008_R1_001.fastq.gz -o 28_4D_mbnl_S20_L008_R1_001 -l 101"
+Elapsed (wall clock) time (h:mm:ss or m:ss): 4:16.12
+Command being timed: "./qual_scores.py -i /projects/bgmp/shared/2017_sequencing/demultiplexed/28_4D_mbnl_S20_L008_R2_001.fastq.gz -o 28_4D_mbnl_S20_L008_R2_001 -l 101"
+Elapsed (wall clock) time (h:mm:ss or m:ss): 4:21.00
+
+mkdir my_qscore_plots
+mv *.png my_qscore_plots/
+
+conda create --name QAA python=3.9
+conda activate QAA
+conda install cutadapt
+cutadapt --version
+ 3.4
+conda install -c bioconda trimmomatic
+trimmomatic -version
+ 0.39
+
+notes from cutadapt --help:
+Usage:
+    cutadapt -a ADAPTER [options] [-o output.fastq] input.fastq
+For paired-end reads:
+    cutadapt -a ADAPT1 -A ADAPT2 [options] -o out1.fastq -p out2.fastq in1.fastq in2.fastq
+Replace "ADAPTER" with the actual sequence of your 3' adapter.
+I will want to use the paired-end option.
+Compressed input and output is supported and
+auto-detected from the file name (.gz, .xz, .bz2).
+
+Found adapter sequences at this website: https://support.illumina.com/bulletins/2016/12/what-sequences-do-i-use-for-adapter-trimming.html
+
+Grepped for r1 sequence in both r1 and r2 and only found it in r1. Grepped for r2 sequence in both r1 and r2 and
+only found it in r2. Should I do anything else??
+
+----------------
+4 September 2021
+----------------
+
+#make directory for output data from cutadapt
+mkdir cutadapt
+
+sbatch cutadapt_run.sh 
+ Submitted batch job 16208243
+
+Information about how many reads were adapter-trimmed is in slurm-16208243.out
+
+27_4C:
+Total read pairs processed:          7,226,430
+  Read 1 with adapter:                 751,117 (10.4%)
+  Read 2 with adapter:                 803,568 (11.1%)
+Pairs written (passing filters):     7,226,430 (100.0%)
+
+28_4D:
+Total read pairs processed:         12,428,766
+  Read 1 with adapter:                 743,440 (6.0%)
+  Read 2 with adapter:                 841,389 (6.8%)
+Pairs written (passing filters):    12,428,766 (100.0%)
+
+#make directory for trimmomatic output
+mkdir trimmed
+
+sbatch trimmomatic_run.sh 
+ Submitted batch job 16208871
+
+Around 5% of read 1 and 0.1-0.2% of read 2 reads end up unpaired after running Trimmomatic. I'm not sure whether
+to concatenate these files onto my paired files in order to use all the data for alignment in part 3 or whether
+I should only carry forward the paired files. I'm leaning toward the latter because it's easier and because paired
+end data should be more useful for downstream analysis, but I'm not sure what's typically done.
+
+#delete intermediate files, which are in cutadapt directory
+rm 27_4C_mbnl_S19_L008_R1_001.adaptertrimmed.fastq.gz
+(QAA) [sgrindst@n225 cutadapt]$ rm 27_4C_mbnl_S19_L008_R2_001.adaptertrimmed.fastq.gz
+(QAA) [sgrindst@n225 cutadapt]$ rm 28_4D_mbnl_S20_L008_R1_001.adaptertrimmed.fastq.gz
+(QAA) [sgrindst@n225 cutadapt]$ rm 28_4D_mbnl_S20_L008_R2_001.adaptertrimmed.fastq.gz
+(QAA) [sgrindst@n225 cutadapt]$ ls
+(QAA) [sgrindst@n225 cutadapt]$ cd ..
+(QAA) [sgrindst@n225 QAA]$ rmdir cutadapt
+
+Part 3
+
+conda activate QAA
+conda install -c bioconda star
+conda install -c conda-forge numpy
+conda install -c bioconda pysam
+conda install -c conda-forge matplotlib
+
+Versions installed:
+star: 2.7.9a
+numpy-1.21.2
+pysam-0.16.0.1
+matplotlib-3.4.3
+
+pip install HTSeq
+version: 0.13.5
+
+#make directory to house mouse gtf and fasta reference files
+mkdir mus
+
+#download gtf and fasta reference files into directory
+cd mus
+wget http://ftp.ensembl.org/pub/release-104/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz
+wget http://ftp.ensembl.org/pub/release-104/gtf/mus_musculus/Mus_musculus.GRCm39.104.gtf.gz
+
+#make directory to house database
+mkdir Mus_musculus.GRCm39.dna.ens104.STAR_2.7.9a
+
+#unzip reference files to use for star database generation
+gunzip Mus*
+#run STAR in genome generate mode to make reference database
+cd ..
+sbatch star_makedb_run.sh 
+ Submitted batch job 16212210
+
+Oops, I forgot to put a \ character between the fasta file argument and the sjdbGTFfile argument. Running again with the issue fixed.
+
+sbatch star_makedb_run.sh 
+ Submitted batch job 16212298
+
+sbatch star_align_run.sh 
+ Submitted batch job 16212348
+
+#move STAR output into its own folder
+mkdir aligned
+mv *.sam aligned/
+mv *Log* aligned/
+mv *SJ* aligned/
+
+sbatch mapped_counts_run.sh 
+ Submitted batch job 16212380
+(output is in aligned directory)
+
+HTSeq-count says to use a GFF file, but GTF appears to fall under this because they say that their default
+parameters are 'suitable for RNA-Seq analysis using an Ensembl GTF file.' So I will use the mus musculus GTF
+that I already have downloaded.
+
+HTSeq-count manual says I need to have a sorted sam as input so I need to install samtools in conda QAA env and
+sort my sams.
+
+conda install -c bioconda samtools
+samtools --version
+samtools 1.13
+
+samtools notes from --help:
+Usage: samtools view [options] <in.bam>|<in.sam>|<in.cram> [region ...]
+Output options:
+ -u, --uncompressed         Uncompressed BAM output (implies --bam)
+This command now auto-detects the input format (BAM/CRAM/SAM).
+
+sbatch sort_sam_run.sh 
+Submitted batch job 16212388
+(output in aligned directory)
+
+#compare line counts between unsorted vs sorted files to make sure my command didn't do anything weird
+wc -l 27_4C_mbnl_S19_L008_Aligned.out.sam
+ 14468416 27_4C_mbnl_S19_L008_Aligned.out.sam
+wc -l 27_4C_mbnl_S19_L008_Aligned.sorted.sam
+ 14468419 27_4C_mbnl_S19_L008_Aligned.sorted.sam
+
+There is a 3-line difference. It might not be a problem if it's just in the header section so I'm going to count
+the lines not in the header section.
+
+grep -v '^@' 27_4C_mbnl_S19_L008_Aligned.out.sam | wc -l
+ 14468352
+grep -v '^@' 27_4C_mbnl_S19_L008_Aligned.sorted.sam | wc -l
+ 14468352
+
+grep -v '^@' 28_4D_mbnl_S20_L008_Aligned.out.sam | wc -l
+ 24698204
+grep -v '^@' 28_4D_mbnl_S20_L008_Aligned.sorted.sam | wc -l
+ 24698204
+
+These numbers match so I'm going to move on for now but I should ask Pete or Leslie why this happens. I googled
+it but instead found people saying that their SAMs got shorter after sorting, whereas mine got a little longer.
+
+sbatch htseq_count_run.sh 
+Submitted batch job 16212391
+(output in aligned folder)
+
+sbatch ./analyze_htseq_count_run.sh 
+Submitted batch job 16212427
+
+HTSeq-count run with stranded=no reports an order of magnitude more reads mapping to features compared to HTSeq-count
+run with stranded=yes, which shows that the RNA-seq library was not prepared with a strand-specific method.
+
+----------------
+5 September 2021
+----------------
+
+I think the easiest way to make the read length distribution plots (end of Part 2) will be to do FASTQC again
+on the trimmed files and use the data .txt files to concatenate the data, then plot in R.
+
+sbatch trimmed_fastqc_run.sh 
+Submitted batch job 16213506
+

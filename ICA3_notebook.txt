@@ -1,0 +1,114 @@
+26 August 2021 - Bi 623 ICA3 - Sally Grindstaff
+
+on talapas, working directory = /projects/bgmp/sgrindst/bioinformatics/Bi623/ICA3
+
+#find the alignment length and check that it's the same for each sequence
+cat fish_astns.fasta | sed -E 's/(^>.*)/>/' | tr -d '\n' | tr '>' '\n' | awk '{print length($0)}' | grep -v ^0
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+257
+
+#find the number of sequences in the file
+grep '>' fish_astns.fasta | wc -l
+30
+
+I made a file called fish_astns.phy and put '30 257\n' in the first line manually.
+Then I did the following command:
+cat fish_astns.fasta | sed -E 's/(^>.*)/\n\1 /' | tr -d '\n' | tr '>' '\n' | sed -n '2~1p' >> fish_astns.phy
+
+Then I went in and added a newline to the last line manually.
+
+Results from Smart Model Selection website:
+Best model: Flu +G+F
+Pete said this might not be loadable but we will try this model and use WAG if it doesn't work.
+
+will need to load these on Talapas:
+module load easybuild
+module load PhyML/3.1
+
+--------------
+27 August 2021
+--------------
+
+Running WAG model because PhyML does not support Flu model.
+
+sbatch phyml_WAG_NNI_b100_run.sh 
+Submitted batch job 16103283
+(base) [sgrindst@talapas-ln2 ICA3]$ sbatch phyml_WAG_SPR_b100_run.sh 
+Submitted batch job 16103284
+(base) [sgrindst@talapas-ln2 ICA3]$ sbatch phyml_WAG_SPR_chi2aLRT_run.sh 
+Submitted batch job 16103285
+
+--------------
+30 August 2021
+--------------
+
+Interesting note from Friday: The run that I did without bootstrapping (using 
+chi2-based aLRT instead) only took around 30 sec to run, while the longest run took
+around 50 minutes. So bootstrapping takes a lot longer, which makes sense because
+each subset of data needs to be run. And doing 100 bootstraps took 100*30s = 50m
+which is what I would expect!
+
+Questions about the data:
+4. For the runs where I used bootstrapping, 4 files per run were written: bootstrap
+stats, bootstrap trees, stats, and trees. The bootstrap stats files contain statistics
+about each individual bootstrap run, the bootstrap trees files contain a tree for
+each bootstrap run, the stats files contain overall statistics about the run, and 
+the trees files each contain the one main tree for that run.
+
+5. The tree files are text files in Newick format. I visualized them using http://iubioarchive.bio.net/treeapp/treeprint-form.html
+See Canvas for PDFs of my trees.
+
+6. All three sets of parameters resulted in the same final tree, although some of
+the confidence intervals are different between trees. Bootstrap values are not
+consistently higher with SPR compared to NNI or vice versa.
+
+7. From these trees, we can tell that the four species of patristacins studied went
+through some sort of duplication event. We can't say for sure that it was a whole
+genome duplication from this data alone, because we are only studying a handful
+of genes here, but all these genes appear to have undergone a duplication in all
+4 species.
+
+8. The clade containing drer6ast1, ssco007615, xmac000812, and tnig008844 appears
+to contain 1:1:1:1 orthologs. We can tell because all 4 of these genes share one
+common ancestor and each of them is from one species, with each species being
+represented once.
+
+9. For the trees made with bootstrapping, the numbers at internal nodes represent
+the repeatability of the node (the likelihood of making a tree with this same node
+if you keep all the parameters the same but use a different subset of data). Ideally,
+this also represents the likelihood that we have arrived at the correct conclusion
+about the existence of that node, but in reality it only represents repeatability
+since we use the same assumptions and parameters for each bootstrap. For the trees
+made with approximate likelihood-ratio testing (aLRT) represents how much any one
+node contributes to the maximum likelihood of the overall tree. Overall, the numbers
+at these internal nodes ideally represent our confidence in that node being present
+in the true phylogenic tree.
+

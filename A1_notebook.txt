@@ -1,0 +1,39 @@
+Assignment 1 - Sally Grindstaff
+
+--------------
+24 August 2021
+--------------
+
+Ran diff -s on my output files from PS7 and Leslie's, and the human-to-fish output matched hers but the fish-to-human
+did not match, so I'm using Leslie's files to be safe.
+
+on Talapas:
+cd /projects/bgmp/sgrindst/bioinformatics/Bi623/
+mkdir A1
+cd A1
+cp /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/H_to_zfishdb.blastp /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/Z_to_homodb.blastp .
+
+cat H_to_zfishdb.blastp | sort -k1,1 -k11,11g > H_to_zfishdb_sorted.txt
+cat Z_to_homodb.blastp | sort -k1,1 -k11,11g > Z_to_homodb_sorted.txt
+
+--------------
+26 August 2021
+--------------
+
+Apparently there was something wrong with Leslie's files when I ran diff -s the other day, so I deleted the
+sorted files I made on the 24th and ran diff -s again to compare my blastp output from PS7 with Leslie's:
+
+cd /projects/bgmp/sgrindst/bioinformatics/Bi621/PS/ps7-sally-grindstaff/
+diff -s Human_to_fish_blastp.txt /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/H_to_zfishdb.blastp
+#Files Human_to_fish_blastp.txt and /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/H_to_zfishdb.blastp are identical
+diff -s Fish_to_human_blastp.txt /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/Z_to_homodb.blastp
+#Files Fish_to_human_blastp.txt and /projects/bgmp/shared/Bi623/PS7_RBH_Bi623/Z_to_homodb.blastp are identical
+
+Going to sort again using my files this time.
+
+cd /projects/bgmp/sgrindst/bioinformatics/Bi623/A1
+cp /projects/bgmp/sgrindst/bioinformatics/Bi621/PS/ps7-sally-grindstaff/Human_to_fish_blastp.txt .
+cp /projects/bgmp/sgrindst/bioinformatics/Bi621/PS/ps7-sally-grindstaff/Fish_to_human_blastp.txt .
+cat Human_to_fish_blastp.txt | sort -k1,1 -k11,11g > h_to_zfish_blastp.sorted.txt
+cat Fish_to_human_blastp.txt | sort -k1,1 -k11,11g > zfish_to_h_blastp.sorted.txt
+
